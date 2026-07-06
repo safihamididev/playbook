@@ -1,6 +1,7 @@
 import cases from "./cases.json" with { type: "json" };
 import type { EvalCase } from "./types.js";
 import { answer } from "../answer.js";
+import { judgeAnswer } from "./judge.js";
 
 const evalCases = cases as EvalCase[];
 
@@ -52,8 +53,6 @@ function checkCase(
   }
 
   // 3. Citation checks: universal for every answer-mode response.
-  //    Two SEPARATE checks — "stopped citing" and "invented a citation"
-  //    are different bugs with different fixes.
   if (test.expect === "answer" && !refused) {
     const cited = [...text.matchAll(CITATION_RE)]
       .map((m) => m[1])
@@ -89,7 +88,20 @@ export async function run(): Promise<number> {
     console.log(`\nRunning: ${test.id} — "${test.query}"`);
     const res = await answer(test.query);
     const retrievedIds = new Set(res.results.map((r) => r.chunk.id));
+
+    // Deterministic tier: facts, cheap, stable.
     const checks = checkCase(test, res.text, retrievedIds);
+
+    // Judge tier: opinions with a model behind them. Only where code
+    // can't reach, clearly labeled, reasoning surfaced on failure.
+    if (test.judge) {
+      const verdict = await judgeAnswer(test.query, res.text, test.judge);
+      checks.push({
+        name: `${test.id} / judge`,
+        pass: verdict.pass,
+        ...(verdict.pass ? {} : { detail: verdict.reason }),
+      });
+    }
 
     for (const c of checks) {
       console.log(`  ${c.pass ? "✓" : "✗"} ${c.name}`);
