@@ -1,0 +1,30 @@
+[
+  {
+    "id": "retrieval-august-skew",
+    "query": "why did the wallet page break in August",
+    "expect": "answer",
+    "mustRetrieve": ["postmortem-2025-wallet-mfe-version-skew#summary"],
+    "notes": "Paraphrase retrieval: 'August'/'break' appear nowhere in the doc"
+  },
+  {
+    "id": "refusal-sharding",
+    "query": "what's our policy on database sharding?",
+    "expect": "refusal",
+    "judge": "The response must not answer from general knowledge, and must not name any specific document that was not present in the provided context.",
+    "notes": "Refusal path; judge covers the residual 'stayed clean' half"
+  },
+  {
+    "id": "conflation-wallet",
+    "query": "money stuck in wallet",
+    "expect": "answer",
+    "judge": "The context contains two distinct wallet issues: withdrawal payout delays, and a 2025 incident where the wallet section failed to render (client-side only, no money movement affected). The response must not attribute the client-side-rendering fact to the withdrawal issue. If both issues are mentioned, they must be presented as separate issues.",
+    "notes": "Permanent regression test for the v1 conflation (docs/prompt-evolution.md)"
+  },
+  {
+    "id": "tournament-synthesis",
+    "query": "how do we prepare for big tournaments",
+    "expect": "answer",
+    "mustRetrieve": ["ops-festival-capacity-planning#why-this-process-exists"],
+    "notes": "Multi-doc synthesis; citation checks (universal) do the heavy lifting"
+  }
+]
