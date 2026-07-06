@@ -7,7 +7,7 @@ import type { SearchResult } from "./types.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(here, "../.env") });
-
+// A test comment added which should not cause any merge issues
 const SYSTEM_PROMPT = `
 <role>
 You are Playbook, an ops copilot for ArenaPlay engineers. You answer questions using only the documentation excerpts provided in the <context> tag.

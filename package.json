@@ -6,7 +6,8 @@
   "scripts": {
     "ingest": "tsx src/ingest.ts",
     "ask": "tsx src/ask.ts",
-    "answer": "tsx src/answer.ts"
+    "answer": "tsx src/answer.ts",
+    "eval": "tsx src/eval/run.ts"
   },
   "keywords": [],
   "author": "",
