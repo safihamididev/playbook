@@ -60,6 +60,8 @@ Short entries, newest last. Each records a decision, the alternative considered,
 
 **Corollary:** `doc` (filename) is stored explicitly on each chunk, not parsed back out of the id. Derived data stored, not reconstructed from a string format that was never a contract.
 
+**Downstream payoff (noted during Phase 2):** because slugified ids have a closed alphabet (`[a-z0-9-]` + `#`), citations are extractable from answer text with a one-line regex. Checkability was a free consequence of deterministic ids.
+
 ---
 
 ## 007 — Fail fast at the ingestion boundary
@@ -109,3 +111,59 @@ Short entries, newest last. Each records a decision, the alternative considered,
 **Result (4-query grid, v1 vs v2):** citations 0/4 → 4/4 with claim-level granularity; the conflation repaired into explicit disambiguation ("a separate 2025 incident…") plus a clarifying question back to the user; refusal stayed clean and became informative; no regressions on the two already-correct answers.
 
 **Meta-decision:** prompts are versioned artifacts with changelogs from v2 onward. This grid becomes the seed of the automated eval suite; the wallet conflation becomes a permanent regression test.
+
+---
+
+## 012 — Prompt v3: machine-checkable refusal marker (and a live regression)
+
+**Decision:** Refusals must begin with the exact marker `NOT_IN_DOCS:`. Refusal detection becomes `startsWith`, immune to phrasing drift.
+
+**Principle:** when a property is hard to check, make the output more checkable rather than the checker smarter. Engineer contracts into the output. (Applied again for the eval judge: verdicts must begin `VERDICT: PASS|FAIL`.)
+
+**Honest changelog entry:** during the v3 refactor, the ambiguity rule — the exact instruction that fixed the 011 conflation — was accidentally dropped, and nothing caught it, because the thing that would catch it was the eval harness being built at the time. Restored. This incident is the empirical argument for the CI gate: prompts are code, they regress through routine edits, and nothing typechecks them.
+
+---
+
+## 013 — Eval architecture: deterministic tier + narrow LLM judge
+
+**Decision:** Two-tier harness. Deterministic checks (refusal mode via marker, required chunk ids retrieved, citations present, citations grounded in the retrieved set) carry the structural load. An LLM judge is used only where code can't reach — faithfulness criteria like the conflation test — with narrow, case-specific criteria written into `cases.json`.
+
+**Judge model: Sonnet, while the answerer runs Haiku.** Two reasons: (1) self-preference bias — a model grading its own generations conflates "plausible to me" with "correct"; different weights break the link between generated-it and grades-it. (2) Cost asymmetry: the judge is O(eval-runs), the answerer is O(traffic) — spend up on the low-volume verdict, stay cheap on the hot path. Same rubric as 002.
+
+**Checkable-output contract:** judge verdicts must begin `VERDICT: PASS` or `VERDICT: FAIL`; a malformed verdict throws — a checker that won't follow its contract must never silently pass or fail anyone (007's principle applied to the checking layer).
+
+**Citation checks are two separate checks by design:** "stopped citing" (prompt compliance) and "invented a citation" (fabrication — the camouflage failure) are different bugs with different fixes and must be reported distinctly.
+
+**Validated by sabotage (see docs/ci-gate.md):** a PR deleting the prompt's instructions block failed 4/14 checks and was blocked from merging. The sabotage also surfaced two honest limitations: `citations-grounded` passes vacuously when no citations exist (improvement: mark as skipped), and single-run judge cases have variance (hardening path: N-run sampling if flakiness observed).
+
+---
+
+## 014 — Query-embedding cache: fail-soft, model-keyed, committed
+
+**Decision:** `search()` caches query embeddings in `.query-cache.json`, keyed `${model}::${query}`. Cache writes are fail-soft (warn and continue); cache reads tolerate a missing file.
+
+**Why fail-soft here when ingest (007) is fail-fast:** the index is the source of truth — corruption there poisons everything downstream, so doubt halts the world. The cache is a derived optimization — losing it costs a re-embed worth a fraction of a cent, and it can never serve *wrong* data because the model in the key makes cross-model staleness structurally unreachable (009's provenance principle). **Fail fast on truth, fail soft on derived data.**
+
+**Committed deliberately:** with `.query-cache.json` (and `embeddings.json`) in the repo, CI runs the retrieval layer with zero Voyage calls. The eval suite's cheapest failure mode is a slow run (cache miss → live embed), not a red build. Origin story: the free-tier 429 (3 RPM) killed eval runs; the write-through cache turned failed runs into progress — each retry ratchets forward.
+
+---
+
+## 015 — CI gate: evals as a required status check
+
+**Decision:** GitHub Actions runs `npm run eval` on every PR and push to main; the runner's exit code is the entire integration. A ruleset on `main` requires the `eval` check, requires PRs (no direct pushes), blocks force pushes, and has an empty bypass list — a red check blocks everyone, including the repo owner.
+
+**Why no bypass:** any guardrail that can be overridden will eventually be overridden under schedule pressure (a recurring theme in the corpus itself — see the wallet MFE version-skew postmortem). For a solo repo the lockout is cheap and the discipline is the point.
+
+**Operating rule:** every observed failure becomes an eval case before (or alongside) its fix. The suite only grows.
+
+---
+
+## 016 — Retrieval stays hardwired; tools are for actions
+
+**Decision (Phase 3 architecture fork):** RAG retrieval remains hardwired — every query embeds, searches, and injects top-k context. Action tools (`get_service_status`, `get_oncall`, `create_incident`) are added alongside it. Retrieval is NOT exposed as a `search_docs` tool the model may choose to call.
+
+**The tradeoff, both sides argued:** retrieval-as-tool enables iterative search — reformulated queries, multi-hop questions ("matchmaking slow" → runbook → follow-up search for the festival capacity process it references). That is the genuinely more capable architecture. Hardwired retrieval wastes an embed call (~100ms, fraction of a cent) and ~3K tokens of ignored context on pure action requests ("page the payments on-call").
+
+**Why hardwired wins here:** with retrieval optional, the model can decide not to search and answer a documentation question from general knowledge — converting the system's core invariant ("answers come from retrieved context"), on which all faithfulness machinery rests (citations, groundedness checks, the conflation test), into a probabilistic model behavior that would itself need evals. **Costs you pay; risks you architect away.** Milliseconds and fractions of a cent are a cost; a soft invariant is a risk.
+
+**Revisit path:** if multi-hop documentation questions become a real need, introduce retrieval-as-tool behind the eval suite — the harness is how that change would be de-risked.

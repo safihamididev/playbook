@@ -47,7 +47,7 @@ query ──► search.ts ──────────► answer.ts ───�
 ## Roadmap
 
 - [x] **Phase 1 — RAG pipeline:** corpus, chunking, ingestion, retrieval, cited generation
-- [ ] **Phase 2 — Eval harness in CI:** retrieval accuracy, citation presence, faithfulness, and refusal checks on every prompt change; the wallet conflation as a permanent regression test
+- [x] **Phase 2 — Eval harness in CI:** retrieval accuracy, citation presence, faithfulness, and refusal checks on every prompt change; the wallet conflation as a permanent regression test
 - [ ] **Phase 3 — Tool use + MCP server:** structured actions (service status, incident creation, on-call lookup) exposed via a published MCP server
 - [ ] **Phase 4 — Model routing + cost dashboard:** Haiku/Sonnet routing by query complexity, with per-query cost, latency, and eval scores made visible
 
