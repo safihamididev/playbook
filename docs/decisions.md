@@ -167,3 +167,12 @@ Short entries, newest last. Each records a decision, the alternative considered,
 **Why hardwired wins here:** with retrieval optional, the model can decide not to search and answer a documentation question from general knowledge — converting the system's core invariant ("answers come from retrieved context"), on which all faithfulness machinery rests (citations, groundedness checks, the conflation test), into a probabilistic model behavior that would itself need evals. **Costs you pay; risks you architect away.** Milliseconds and fractions of a cent are a cost; a soft invariant is a risk.
 
 **Revisit path:** if multi-hop documentation questions become a real need, introduce retrieval-as-tool behind the eval suite — the harness is how that change would be de-risked.
+
+## 017 — Prompt caching: evaluated, instrumented, deferred
+
+**Decision:** Not activated. The agent loop's cacheable prefix (tools + system + first user message) runs ~2.4K tokens — below Haiku 4.5's 4,096-token minimum. Below the minimum, `cache_control` silently no-ops: the request succeeds, nothing caches, and you pay full price while believing you've optimized — the plausible-but-wrong failure mode again (see 007, 009).
+
+**Instrumented now:** per-turn logging of `cache_creation_input_tokens` / `cache_read_input_tokens` alongside input/output tokens. Cost: one line.
+
+**Revisit trigger (observable, not remembered):** when the prefix grows past 4,096 (MCP wrapping, larger context, more tools), activation is one `cache_control: {type: "ephemeral"}` on the system block — and the logs
+themselves confirm it worked (creation on turn 1, reads on turns 2+).

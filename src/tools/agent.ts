@@ -13,8 +13,6 @@ import {
 const here = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(here, "../../.env") });
 
-console.log()
-
 const MAX_TURNS = 8;
 
 const AGENT_SYSTEM_PROMPT = "";

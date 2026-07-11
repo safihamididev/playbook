@@ -6,7 +6,7 @@
   "scripts": {
     "ingest": "tsx src/ingest.ts",
     "ask": "tsx src/ask.ts",
-    "answer": "tsx src/answer.ts",
+    "answer": "tsx src/answerCaller.ts",
     "eval": "tsx src/eval/run.ts",
     "agent": "tsx src/tools/agent.ts"
   },

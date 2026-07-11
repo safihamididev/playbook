@@ -11,12 +11,18 @@ interface CheckResult {
   detail?: string; // only on failure — what was expected vs. seen
 }
 
+interface ToolCall {
+  name: string;
+  input: unknown;
+}
+
 const CITATION_RE = /\[([a-z0-9-]+#[a-z0-9-]+)\]/g;
 
 function checkCase(
   test: EvalCase,
   text: string,
-  retrievedIds: Set<string>
+  retrievedIds: Set<string>,
+  trace: ToolCall[]
 ): CheckResult[] {
   const checks: CheckResult[] = [];
 
@@ -52,8 +58,40 @@ function checkCase(
     });
   }
 
-  // 3. Citation checks: universal for every answer-mode response.
-  if (test.expect === "answer" && !refused) {
+  // 3. Tool-call assertions against the trace.
+  //    Constraints, not scripts: tool use is non-deterministic across runs
+  //    (same query may or may not add an optional lookup), so cases assert
+  //    "must include" / "must not include", never exact sequences.
+  const calledTools = new Set(trace.map((t) => t.name));
+  const calledList = trace.length
+    ? [...calledTools].join(", ")
+    : "(no tools called)";
+
+  if (test.mustCallTools) {
+    const missing = test.mustCallTools.filter((t) => !calledTools.has(t));
+    checks.push({
+      name: `${test.id} / tools-called`,
+      pass: missing.length === 0,
+      ...(missing.length
+        ? { detail: `missing required: ${missing.join(", ")} — actually called: ${calledList}` }
+        : {}),
+    });
+  }
+
+  if (test.mustNotCallTools) {
+    const forbidden = test.mustNotCallTools.filter((t) => calledTools.has(t));
+    checks.push({
+      name: `${test.id} / tools-not-called`,
+      pass: forbidden.length === 0,
+      ...(forbidden.length
+        ? { detail: `forbidden tools called: ${forbidden.join(", ")} — full trace: ${calledList}` }
+        : {}),
+    });
+  }
+
+  // 4. Citation checks: default for every answer-mode response, opt-out per
+  //    case for answers expected to come purely from tools.
+  if (test.expect === "answer" && !refused && !test.skipCitationChecks) {
     const cited = [...text.matchAll(CITATION_RE)]
       .map((m) => m[1])
       .filter((id): id is string => id !== undefined);
@@ -89,8 +127,7 @@ export async function run(): Promise<number> {
     const res = await answer(test.query);
     const retrievedIds = new Set(res.results.map((r) => r.chunk.id));
 
-    // Deterministic tier: facts, cheap, stable.
-    const checks = checkCase(test, res.text, retrievedIds);
+    const checks = checkCase(test, res.text, retrievedIds, res.trace);
 
     // Judge tier: opinions with a model behind them. Only where code
     // can't reach, clearly labeled, reasoning surfaced on failure.
