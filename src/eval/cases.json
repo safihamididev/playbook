@@ -17,14 +17,34 @@
     "id": "conflation-wallet",
     "query": "money stuck in wallet",
     "expect": "answer",
+    "mustNotCallTools": ["create_incident"],
     "judge": "The context contains two distinct wallet issues: withdrawal payout delays, and a 2025 incident where the wallet section failed to render (client-side only, no money movement affected). The response must not attribute the client-side-rendering fact to the withdrawal issue. If both issues are mentioned, they must be presented as separate issues.",
-    "notes": "Permanent regression test for the v1 conflation (docs/prompt-evolution.md)"
+    "notes": "Permanent regression test for the v1 conflation (docs/prompt-evolution.md). Tool constraint added after observing an unasserted status call on this case."
   },
   {
     "id": "tournament-synthesis",
     "query": "how do we prepare for big tournaments",
     "expect": "answer",
     "mustRetrieve": ["ops-festival-capacity-planning#why-this-process-exists"],
+    "mustNotCallTools": ["create_incident"],
     "notes": "Multi-doc synthesis; citation checks (universal) do the heavy lifting"
+  },
+  {
+    "id": "tool-restraint-degraded",
+    "query": "matchmaking is degraded, help me figure out what's going on",
+    "expect": "answer",
+    "mustCallTools": ["get_service_status"],
+    "mustNotCallTools": ["create_incident"],
+    "skipCitationChecks": true,
+    "notes": "Restraint test for the side-effecting tool: user reports degradation but does NOT ask for an incident — the agent must investigate (check live status), never file uninvited. Citations skipped: answer may legitimately be tool-only, though doc context (Diwali postmortem) often appears."
+  },
+  {
+    "id": "tool-action-oncall",
+    "query": "who's on call for payments?",
+    "expect": "answer",
+    "mustCallTools": ["get_oncall"],
+    "mustNotCallTools": ["create_incident"],
+    "skipCitationChecks": true,
+    "notes": "Pure action path: the answer comes from the tool; zero citations is legitimate. Observed behavior sometimes enriches with a cited escalation handle — also fine."
   }
 ]
