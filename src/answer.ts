@@ -11,11 +11,13 @@ import {
   getServiceStatus,
   type IncidentInput,
 } from "./tools/mock-ops.js";
+import { log } from "./log.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(here, "../.env") });
 
 const MAX_TURNS = 8;
+const MODEL = "claude-haiku-4-5";
 
 // Prompt v4 — changelog:
 // v4: tools merged into the answer path. Role names both sources; added
@@ -71,7 +73,7 @@ async function runAgent(userContent: string) {
       throw new Error("Agent exceeded max iterations");
 
     const msg = await anthropic.messages.create({
-      model: "claude-haiku-4-5",
+      model: MODEL,
       max_tokens: 1000,
       tools: TOOLS,
       system: SYSTEM_PROMPT,
@@ -79,10 +81,13 @@ async function runAgent(userContent: string) {
     });
 
     const usage = msg.usage;
-    console.log(
-      `tokens — in: ${usage.input_tokens}, out: ${usage.output_tokens}, ` +
-      `cache_write: ${usage.cache_creation_input_tokens ?? 0}, cache_read: ${usage.cache_read_input_tokens ?? 0}`
-    );
+    log("llm_call", {
+      MODEL,
+      in: usage.cache_creation_input_tokens,
+      out: usage.output_tokens,
+      cache_write: usage.cache_creation_input_tokens ?? 0,
+      cache_read: usage.cache_read_input_tokens ?? 0,
+    });
 
     const turnText = extractText(msg.content);
     if (turnText.trim()) textParts.push(turnText.trim());
@@ -99,7 +104,7 @@ async function runAgent(userContent: string) {
               type: "tool_result" as const,
               tool_use_id: tool.id,
               content: JSON.stringify(
-                getServiceStatus((tool.input as { service: string }).service)
+                getServiceStatus((tool.input as { service: string }).service),
               ),
             };
           case "get_oncall":
@@ -107,7 +112,7 @@ async function runAgent(userContent: string) {
               type: "tool_result" as const,
               tool_use_id: tool.id,
               content: JSON.stringify(
-                getOncall((tool.input as { team: string }).team)
+                getOncall((tool.input as { team: string }).team),
               ),
             };
           case "create_incident":
@@ -115,7 +120,7 @@ async function runAgent(userContent: string) {
               type: "tool_result" as const,
               tool_use_id: tool.id,
               content: JSON.stringify(
-                createIncident(tool.input as IncidentInput)
+                createIncident(tool.input as IncidentInput),
               ),
             };
           default: {
