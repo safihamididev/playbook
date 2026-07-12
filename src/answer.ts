@@ -12,6 +12,7 @@ import {
   type IncidentInput,
 } from "./tools/mock-ops.js";
 import { log } from "./log.js";
+import { costOf } from "./pricing.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(here, "../.env") });
@@ -59,7 +60,7 @@ function extractText(content: Anthropic.ContentBlock[]): string {
     .join("");
 }
 
-async function runAgent(userContent: string) {
+async function runAgent(userContent: string, runId: string) {
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const messages: Anthropic.MessageParam[] = [];
   messages.push({ role: "user", content: userContent });
@@ -71,7 +72,7 @@ async function runAgent(userContent: string) {
   while (true) {
     if (iterations++ >= MAX_TURNS)
       throw new Error("Agent exceeded max iterations");
-
+    const startTime = Date.now();
     const msg = await anthropic.messages.create({
       model: MODEL,
       max_tokens: 1000,
@@ -82,11 +83,14 @@ async function runAgent(userContent: string) {
 
     const usage = msg.usage;
     log("llm_call", {
-      MODEL,
-      in: usage.cache_creation_input_tokens,
+      runId,
+      model: MODEL,
+      in: usage.input_tokens,
       out: usage.output_tokens,
       cache_write: usage.cache_creation_input_tokens ?? 0,
       cache_read: usage.cache_read_input_tokens ?? 0,
+      latency_ms: Date.now() - startTime,
+      cost_usd: costOf(MODEL, usage)
     });
 
     const turnText = extractText(msg.content);
@@ -150,8 +154,8 @@ export async function answer(query: string) {
 
   const results: SearchResult[] = await search(query, 5);
   const userContent = getUserContent(query, results);
+  const runId = crypto.randomUUID();
+  const { text, trace } = await runAgent(userContent, runId);
 
-  const { text, trace } = await runAgent(userContent);
-
-  return { text, results, trace };
+  return { text, results, trace, runId };
 }

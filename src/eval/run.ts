@@ -132,7 +132,7 @@ export async function run(): Promise<number> {
     // Judge tier: opinions with a model behind them. Only where code
     // can't reach, clearly labeled, reasoning surfaced on failure.
     if (test.judge) {
-      const verdict = await judgeAnswer(test.query, res.text, test.judge);
+      const verdict = await judgeAnswer(test.query, res.text, test.judge, res.runId);
       checks.push({
         name: `${test.id} / judge`,
         pass: verdict.pass,
