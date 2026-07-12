@@ -44,11 +44,55 @@ query ──► search.ts ──────────► answer.ts ───�
 
 **Generation:** Claude Haiku with a versioned system prompt enforcing per-claim citations, refusal without general-knowledge fallback, and separate presentation of distinct issues (the rule that fixed the observed conflation).
 
-## Roadmap
+## MCP server
+ 
+Playbook is also an [MCP](https://modelcontextprotocol.io) server: its
+retrieval, ops tools, and full answer pipeline are consumable by any MCP
+client — Claude Desktop, Claude Code, or your own agent.
+ 
+| Tool | Tier | Description |
+|---|---|---|
+| `search_docs` | primitive | Semantic search over the ops corpus; returns chunks with stable, citable ids |
+| `get_service_status` | primitive | Live status + p99 for a production service |
+| `get_oncall` | primitive | Current on-call engineer for a team |
+| `create_incident` | primitive | Files an incident (description enforces conservative use) |
+| `ask_playbook` | composed | The entire pipeline — grounded, cited, refusal-capable — behind one call |
+ 
+Two tiers by design: primitives hand raw capability to agents that own their
+own correctness; `ask_playbook` carries Playbook's guarantees inside the
+call. Rationale and a real Claude Desktop session in
+[docs/mcp-demo.md](docs/mcp-demo.md).
+ 
+**Try it without any client:**
+ 
+```bash
+npx @modelcontextprotocol/inspector tsx src/mcp/server.ts
+```
+ 
+**Register in Claude Desktop** — add to
+`~/Library/Application Support/Claude/claude_desktop_config.json`
+(`%APPDATA%\Claude\` on Windows), absolute paths required:
+ 
+```json
+{
+  "mcpServers": {
+    "playbook": {
+      "command": "/absolute/path/to/repo/node_modules/.bin/tsx",
+      "args": ["/absolute/path/to/repo/src/mcp/server.ts"]
+    }
+  }
+}
+```
+ 
+Requires `VOYAGE_API_KEY` and `ANTHROPIC_API_KEY` in the repo's `.env`
+(loaded relative to the source files, so it works regardless of the client's
+working directory).
 
+## Roadmap
+ 
 - [x] **Phase 1 — RAG pipeline:** corpus, chunking, ingestion, retrieval, cited generation
-- [x] **Phase 2 — Eval harness in CI:** retrieval accuracy, citation presence, faithfulness, and refusal checks on every prompt change; the wallet conflation as a permanent regression test
-- [ ] **Phase 3 — Tool use + MCP server:** structured actions (service status, incident creation, on-call lookup) exposed via a published MCP server
+- [x] **Phase 2 — Eval harness in CI:** deterministic checks + LLM judge, required status check on main; the wallet conflation as a permanent regression test ([docs/ci-gate.md](docs/ci-gate.md))
+- [x] **Phase 3 — Tool use + MCP server:** agentic loop with ops tools, tool-call evals, and a two-tier MCP server demoed in Claude Desktop ([docs/mcp-demo.md](docs/mcp-demo.md))
 - [ ] **Phase 4 — Model routing + cost dashboard:** Haiku/Sonnet routing by query complexity, with per-query cost, latency, and eval scores made visible
 
 ## Stack

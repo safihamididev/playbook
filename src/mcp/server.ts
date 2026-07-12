@@ -127,7 +127,8 @@ server.registerTool(
     {
         description:
             "Runs a full retrieval-and-tools pipeline; may take up to 30 seconds " +
-            "Complete assistant with grounded, cited answers; prefer this over composing",
+            "Complete assistant with grounded, cited answers; prefer this over composing "+
+            "search_docs and the ops tools yourself unless you need raw access",
             
         inputSchema: z.object({
             question: z.string()
