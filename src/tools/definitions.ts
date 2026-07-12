@@ -6,7 +6,7 @@ import type Anthropic from "@anthropic-ai/sdk";
 // Enums make invalid inputs unrepresentable at the schema level (same
 // make-invalid-states-unreachable move as deterministic chunk ids).
 
-const SERVICES = [
+export const SERVICES = [
   "matchmaking",
   "wallet",
   "session-gateway",
@@ -15,9 +15,9 @@ const SERVICES = [
   "payout-orchestrator",
 ] as const;
 
-const TEAMS = ["web-platform", "payments", "game-services", "risk"] as const;
+export const TEAMS = ["web-platform", "payments", "game-services", "risk"] as const;
 
-const SEVERITIES = ["SEV-1", "SEV-2", "SEV-3"] as const;
+export const SEVERITIES = ["SEV-1", "SEV-2", "SEV-3"] as const;
 
 export const TOOLS: Anthropic.Tool[] = [
   {

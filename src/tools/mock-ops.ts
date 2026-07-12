@@ -42,7 +42,7 @@ export interface ToolError {
 
 // One service is deliberately degraded — a healthy-everything mock makes
 // every demo boring and gives tools+RAG nothing to collaborate on.
-const SERVICES: Record<ServiceName, ServiceStatus> = {
+export const SERVICES: Record<ServiceName, ServiceStatus> = {
   matchmaking: {
     service: "matchmaking",
     status: "degraded",

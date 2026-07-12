@@ -176,3 +176,7 @@ Short entries, newest last. Each records a decision, the alternative considered,
 
 **Revisit trigger (observable, not remembered):** when the prefix grows past 4,096 (MCP wrapping, larger context, more tools), activation is one `cache_control: {type: "ephemeral"}` on the system block — and the logs
 themselves confirm it worked (creation on turn 1, reads on turns 2+).
+
+## 018 -- Custom Logging: 
+The 018 principle, verbatim for the log: when you stop owning the loop, invariants can't be imposed on the caller — so offer a primitives tier where the caller owns correctness, 
+and a composed tier where your invariants ride along. (Standard platform-API shape: raw K/V store vs. transactional layer.)
