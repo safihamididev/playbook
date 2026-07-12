@@ -176,3 +176,56 @@ Short entries, newest last. Each records a decision, the alternative considered,
 
 **Revisit trigger (observable, not remembered):** when the prefix grows past 4,096 (MCP wrapping, larger context, more tools), activation is one `cache_control: {type: "ephemeral"}` on the system block — and the logs
 themselves confirm it worked (creation on turn 1, reads on turns 2+).
+
+## 018 — MCP surface: two tiers, because invariants don't cross ownership boundaries
+ 
+**Decision:** The MCP server exposes five tools in two tiers. Primitives —
+`search_docs`, `get_service_status`, `get_oncall`, `create_incident` — hand
+raw capability to the calling agent, which composes them freely and owns its
+own correctness. The composed tool — `ask_playbook` — runs the entire
+Playbook pipeline (hardwired retrieval, agent loop, per-claim citations,
+refusal marker) behind one call, carrying Playbook's guarantees inside a
+black box.
+ 
+**Why 016 doesn't simply transfer:** 016 hardwired retrieval because we owned
+the loop — the invariant "answers are grounded in retrieved context" was
+enforced by construction. Over MCP, the deciding model runs under a prompt we
+don't control; there is no loop to hardwire. The invariant's *reasoning*
+survives; its *enforcement point* is gone. The two tiers are the answer:
+where the caller owns the loop, offer parts; where the caller wants the
+guarantees, offer the pipeline. (Standard platform-API shape: raw K/V store
+vs. transactional layer.)
+ 
+**Empirical boundary, observed in the first real-client session (see
+docs/mcp-demo.md):** `search_docs`'s description asks callers to cite chunk
+ids; Claude Desktop's agent used the tool well — paraphrase resolution,
+cross-chunk synthesis — and did not cite. **Instructions travel, invariants
+don't.** A description can request good behavior from an external agent; only
+the composed tier can guarantee it. Also observed: the consuming agent
+paraphrases even `ask_playbook`'s cited answers into its own voice — we
+control the answer, not the presentation.
+ 
+**Corollary noted for retrieval-as-tool:** the iterative multi-hop retrieval
+016 traded away now exists legitimately — one layer up, in the consumer's
+agent, where its faithfulness is the consumer's responsibility.
+ 
+---
+ 
+## 019 — MCP logging: stdout is the protocol; diagnostics are structured JSONL on stderr
+ 
+**Decision:** In stdio transport, stdout carries MCP protocol frames — any
+stray `console.log` corrupts the channel. All diagnostics moved to
+`src/log.ts`: one function writing JSONL events
+(`{ts, event, ...data}`) to **stderr**, which MCP hosts capture per-server
+(Claude Desktop: `~/Library/Logs/Claude/mcp-server-playbook.log`).
+ 
+**Why structured, not just redirected:** the token-usage lines
+(`llm_call` events with model, input/output/cache token counts) are the
+Phase 4 cost dashboard's data feed. One instrumentation point, two consumers:
+human-readable diagnostics today, machine-ingestable cost records tomorrow —
+adding a file sink is a two-line change inside `log()` when the dashboard
+needs it.
+ 
+**Aside for the interview shelf:** the stdout/stderr split — machine channel
+vs. diagnostic channel — is 50-year-old Unix design suddenly load-bearing in
+a 2024 protocol.

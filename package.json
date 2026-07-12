@@ -1,5 +1,5 @@
 {
-  "name": "arena-play",
+  "name": "playbook",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -16,8 +16,10 @@
   "type": "module",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "dotenv": "^17.4.2",
-    "voyageai": "^0.4.0"
+    "voyageai": "^0.4.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^26.1.0",
