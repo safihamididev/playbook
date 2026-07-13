@@ -1,0 +1,193 @@
+{
+  "generatedAt": "2026-07-13T14:50:10.803Z",
+  "runStartedAt": "2026-07-13T14:47:41.763Z",
+  "queryCount": 12,
+  "totalCostUsd": 0.147975,
+  "avgCostPerQueryUsd": 0.012331,
+  "modelSplit": [
+    {
+      "model": "claude-haiku-4-5",
+      "queries": 8,
+      "pct": 66.7,
+      "costUsd": 0.056211
+    },
+    {
+      "model": "claude-sonnet-4-6",
+      "queries": 4,
+      "pct": 33.3,
+      "costUsd": 0.091764
+    }
+  ],
+  "routing": {
+    "byReason": [
+      {
+        "reason": "default",
+        "queries": 8
+      },
+      {
+        "reason": "manual-override",
+        "queries": 2
+      },
+      {
+        "reason": "synthesis:3docs",
+        "queries": 2
+      }
+    ],
+    "escalationRatePct": 33.3
+  },
+  "latency": {
+    "p50Ms": 10323,
+    "p90Ms": 19571,
+    "maxMs": 22544
+  },
+  "cache": {
+    "anyCacheHits": false,
+    "note": "Prompt caching not active — prefix below Haiku 4.5's 4,096-token minimum (decision 017)."
+  },
+  "queries": [
+    {
+      "runId": "d81a1dde-c389-42ae-a495-bce437f0ab14",
+      "model": "claude-sonnet-4-6",
+      "reason": "synthesis:3docs",
+      "distinctDocs": 3,
+      "topScore": 0.5653,
+      "turns": 2,
+      "costUsd": 0.025452,
+      "latencyMsTotal": 22544,
+      "tokensIn": 3824,
+      "tokensOut": 932
+    },
+    {
+      "runId": "662b5663-4381-4ca1-ad5c-255005827c68",
+      "model": "claude-sonnet-4-6",
+      "reason": "manual-override",
+      "distinctDocs": 2,
+      "topScore": 0.6536,
+      "turns": 2,
+      "costUsd": 0.023508,
+      "latencyMsTotal": 19357,
+      "tokensIn": 3711,
+      "tokensOut": 825
+    },
+    {
+      "runId": "0b0e23f9-221b-4f24-8283-369254bbc6f6",
+      "model": "claude-sonnet-4-6",
+      "reason": "synthesis:3docs",
+      "distinctDocs": 3,
+      "topScore": 0.5181,
+      "turns": 1,
+      "costUsd": 0.022014,
+      "latencyMsTotal": 18987,
+      "tokensIn": 2643,
+      "tokensOut": 939
+    },
+    {
+      "runId": "4d11c2a5-950e-4434-bf16-3d5dd179cb3c",
+      "model": "claude-sonnet-4-6",
+      "reason": "manual-override",
+      "distinctDocs": 2,
+      "topScore": 0.5105,
+      "turns": 2,
+      "costUsd": 0.02079,
+      "latencyMsTotal": 19571,
+      "tokensIn": 3155,
+      "tokensOut": 755
+    },
+    {
+      "runId": "59018bb3-2696-4f56-8dfd-a16f1c7737d7",
+      "model": "claude-haiku-4-5",
+      "reason": "default",
+      "distinctDocs": 2,
+      "topScore": 0.4269,
+      "turns": 2,
+      "costUsd": 0.01155,
+      "latencyMsTotal": 10323,
+      "tokensIn": 5960,
+      "tokensOut": 658
+    },
+    {
+      "runId": "4a2d3b38-c00a-4005-8b78-162fc73d8c69",
+      "model": "claude-haiku-4-5",
+      "reason": "default",
+      "distinctDocs": 1,
+      "topScore": 0.5134,
+      "turns": 3,
+      "costUsd": 0.010371,
+      "latencyMsTotal": 15148,
+      "tokensIn": 7936,
+      "tokensOut": 487
+    },
+    {
+      "runId": "479ada4b-fe3d-4bf9-8ab2-84ed77597af5",
+      "model": "claude-haiku-4-5",
+      "reason": "default",
+      "distinctDocs": 2,
+      "topScore": 0.4281,
+      "turns": 1,
+      "costUsd": 0.008355,
+      "latencyMsTotal": 8823,
+      "tokensIn": 3192,
+      "tokensOut": 515
+    },
+    {
+      "runId": "88b65d05-1cc4-402c-aaeb-ec1f4e8b17ae",
+      "model": "claude-haiku-4-5",
+      "reason": "default",
+      "distinctDocs": 3,
+      "topScore": 0.42,
+      "turns": 1,
+      "costUsd": 0.007509,
+      "latencyMsTotal": 6614,
+      "tokensIn": 2887,
+      "tokensOut": 410
+    },
+    {
+      "runId": "90b6f657-c75a-4ec0-9611-37253a9d8759",
+      "model": "claude-haiku-4-5",
+      "reason": "default",
+      "distinctDocs": 4,
+      "topScore": 0.372,
+      "turns": 2,
+      "costUsd": 0.005194,
+      "latencyMsTotal": 4932,
+      "tokensIn": 4784,
+      "tokensOut": 82
+    },
+    {
+      "runId": "4a354087-6c33-4fa3-86e8-cdf2a6fd2ce3",
+      "model": "claude-haiku-4-5",
+      "reason": "default",
+      "distinctDocs": 4,
+      "topScore": 0.3654,
+      "turns": 1,
+      "costUsd": 0.004705,
+      "latencyMsTotal": 4494,
+      "tokensIn": 2858,
+      "tokensOut": 131
+    },
+    {
+      "runId": "27327dbe-1865-4eee-b6d7-1dd6b48475c8",
+      "model": "claude-haiku-4-5",
+      "reason": "default",
+      "distinctDocs": 3,
+      "topScore": 0.4184,
+      "turns": 1,
+      "costUsd": 0.004413,
+      "latencyMsTotal": 4000,
+      "tokensIn": 2203,
+      "tokensOut": 442
+    },
+    {
+      "runId": "8bb91214-afab-4486-9170-fda7d6e355d8",
+      "model": "claude-haiku-4-5",
+      "reason": "default",
+      "distinctDocs": 2,
+      "topScore": 0.4697,
+      "turns": 1,
+      "costUsd": 0.004114,
+      "latencyMsTotal": 5495,
+      "tokensIn": 2284,
+      "tokensOut": 366
+    }
+  ]
+}

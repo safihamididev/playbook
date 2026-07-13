@@ -88,12 +88,40 @@ Requires `VOYAGE_API_KEY` and `ANTHROPIC_API_KEY` in the repo's `.env`
 (loaded relative to the source files, so it works regardless of the client's
 working directory).
 
+## Cost & routing dashboard
+ 
+Every LLM call is instrumented — model, tokens, cost, latency — as JSONL
+(`logs/events.jsonl`). A build-time aggregator rolls those events up per query
+into `dashboard/public/summary.json`, and a small Next.js page renders it: model
+split, cost by model, routing reasons, latency, and cache utilization.
+ 
+Playbook routes on **retrieval signals it already computes** — no extra
+classifier call. Queries whose chunks span several documents at a strong match
+escalate to Sonnet; everything else stays on Haiku, ~3.6× cheaper. Which queries
+*genuinely* need the upgrade is decided by an experiment, not an assumption — see
+[docs/routing-experiment.md](docs/routing-experiment.md).
+ 
+```bash
+# from repo root: produce a fresh run, then aggregate and view
+npm run eval
+cd dashboard
+npm run aggregate     # reads ../logs/events.jsonl → public/summary.json
+npm run dev           # localhost:3000
+```
+ 
+The committed `summary.json` lets the dashboard render real numbers without the
+raw logs or any API key.
+ 
+<!-- ──────────────────────────────────────────────────────────────
+Roadmap block — replace with:
+─────────────────────────────────────────────────────────────── -->
+ 
 ## Roadmap
  
 - [x] **Phase 1 — RAG pipeline:** corpus, chunking, ingestion, retrieval, cited generation
 - [x] **Phase 2 — Eval harness in CI:** deterministic checks + LLM judge, required status check on main; the wallet conflation as a permanent regression test ([docs/ci-gate.md](docs/ci-gate.md))
 - [x] **Phase 3 — Tool use + MCP server:** agentic loop with ops tools, tool-call evals, and a two-tier MCP server demoed in Claude Desktop ([docs/mcp-demo.md](docs/mcp-demo.md))
-- [ ] **Phase 4 — Model routing + cost dashboard:** Haiku/Sonnet routing by query complexity, with per-query cost, latency, and eval scores made visible
+- [x] **Phase 4 — Model routing + cost dashboard:** experiment-driven Haiku/Sonnet routing on retrieval signals, per-query cost instrumentation, and a Next.js dashboard ([docs/routing-experiment.md](docs/routing-experiment.md))
 
 ## Stack
 
