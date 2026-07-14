@@ -1,8 +1,12 @@
 import dotenv from "dotenv";
 import path from "node:path";
+import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import Anthropic from "@anthropic-ai/sdk";
 import { search } from "./search.js";
+import { route } from "./router.js";
+import { costOf } from "./pricing.js";
+import { log } from "./log.js";
 import type { SearchResult } from "./types.js";
 import { TOOLS } from "./tools/definitions.js";
 import {
@@ -11,18 +15,13 @@ import {
   getServiceStatus,
   type IncidentInput,
 } from "./tools/mock-ops.js";
-import { log } from "./log.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(here, "../.env") });
 
 const MAX_TURNS = 8;
-const MODEL = "claude-haiku-4-5";
 
-// Prompt v4 — changelog:
-// v4: tools merged into the answer path. Role names both sources; added
-//     source-delimitation rule (docs = how-to/history/policy, tools =
-//     current state/actions) and tool-claims-uncited rule.
+// Prompt v4 — see docs/prompt-evolution.md.
 const SYSTEM_PROMPT = `
 <role>
 You are Playbook, an ops copilot for ArenaPlay engineers. You answer questions using the documentation excerpts provided in the <context> tag and the operational tools available to you.
@@ -59,34 +58,39 @@ function extractText(content: Anthropic.ContentBlock[]): string {
     .join("");
 }
 
-async function runAgent(userContent: string) {
+async function runAgent(userContent: string, model: string, runId: string) {
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  const messages: Anthropic.MessageParam[] = [];
-  messages.push({ role: "user", content: userContent });
+  const messages: Anthropic.MessageParam[] = [
+    { role: "user", content: userContent },
+  ];
   let iterations = 0;
   const trace: { name: string; input: unknown }[] = [];
-
   const textParts: string[] = [];
 
   while (true) {
     if (iterations++ >= MAX_TURNS)
       throw new Error("Agent exceeded max iterations");
 
+    const started = Date.now();
     const msg = await anthropic.messages.create({
-      model: MODEL,
+      model,
       max_tokens: 1000,
       tools: TOOLS,
       system: SYSTEM_PROMPT,
       messages,
     });
+    const latency_ms = Date.now() - started;
 
-    const usage = msg.usage;
+    const u = msg.usage;
     log("llm_call", {
-      MODEL,
-      in: usage.cache_creation_input_tokens,
-      out: usage.output_tokens,
-      cache_write: usage.cache_creation_input_tokens ?? 0,
-      cache_read: usage.cache_read_input_tokens ?? 0,
+      runId,
+      model,
+      in: u.input_tokens,
+      out: u.output_tokens,
+      cache_write: u.cache_creation_input_tokens ?? 0,
+      cache_read: u.cache_read_input_tokens ?? 0,
+      latency_ms,
+      cost_usd: costOf(model, u),
     });
 
     const turnText = extractText(msg.content);
@@ -104,7 +108,7 @@ async function runAgent(userContent: string) {
               type: "tool_result" as const,
               tool_use_id: tool.id,
               content: JSON.stringify(
-                getServiceStatus((tool.input as { service: string }).service),
+                getServiceStatus((tool.input as { service: string }).service)
               ),
             };
           case "get_oncall":
@@ -112,7 +116,7 @@ async function runAgent(userContent: string) {
               type: "tool_result" as const,
               tool_use_id: tool.id,
               content: JSON.stringify(
-                getOncall((tool.input as { team: string }).team),
+                getOncall((tool.input as { team: string }).team)
               ),
             };
           case "create_incident":
@@ -120,17 +124,16 @@ async function runAgent(userContent: string) {
               type: "tool_result" as const,
               tool_use_id: tool.id,
               content: JSON.stringify(
-                createIncident(tool.input as IncidentInput),
+                createIncident(tool.input as IncidentInput)
               ),
             };
-          default: {
+          default:
             return {
               type: "tool_result" as const,
               tool_use_id: tool.id,
               content: `Unknown tool: ${tool.name}`,
               is_error: true,
             };
-          }
         }
       });
 
@@ -148,10 +151,24 @@ export async function answer(query: string) {
     throw new Error("Anthropic key was not loaded");
   }
 
+  const runId = randomUUID();
   const results: SearchResult[] = await search(query, 5);
+
+  // Route from retrieval signals. Manual override (PLAYBOOK_MODEL) kept as an
+  // escape hatch for A/B reruns; otherwise the router decides.
+  const decision = route(results);
+  const model = process.env.PLAYBOOK_MODEL ?? decision.model;
+
+  log("route", {
+    runId,
+    model,
+    reason: process.env.PLAYBOOK_MODEL ? "manual-override" : decision.reason,
+    distinctDocs: decision.distinctDocs,
+    topScore: Number(decision.topScore.toFixed(4)),
+  });
+
   const userContent = getUserContent(query, results);
+  const { text, trace } = await runAgent(userContent, model, runId);
 
-  const { text, trace } = await runAgent(userContent);
-
-  return { text, results, trace };
+  return { text, results, trace, runId, model };
 }

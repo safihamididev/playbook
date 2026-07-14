@@ -46,5 +46,62 @@
     "mustNotCallTools": ["create_incident"],
     "skipCitationChecks": true,
     "notes": "Pure action path: the answer comes from the tool; zero citations is legitimate. Observed behavior sometimes enriches with a cited escalation handle — also fine."
+  },
+  {
+    "id": "hard-recurring-theme",
+    "tier": "hard",
+    "query": "What recurring engineering lesson connects the wallet MFE version-skew outage and the BFF resolver timeout cascade?",
+    "expect": "answer",
+    "mustRetrieve": ["postmortem-2025-wallet-mfe-version-skew#lessons"],
+    "expectModel": "sonnet",
+    "judge": "Both incidents were caused by a temporary or override state that persisted because nothing automatically expired it (a CI-check override in the wallet-skew incident; a 'temporary' resolver timeout in the BFF cascade), and both were fixed by making that state machine-enforced with automatic expiry rather than relying on human discipline. A complete answer must identify machine-enforced expiry of temporary/override states as a shared lesson connecting the two incidents — naming that the fix is automatic, machine-checked expiry (e.g. overrides with TTLs, timeouts with automated reversion). The answer may also mention the broader principle that soft controls decay; that broader framing is acceptable and even desirable as long as the machine-enforced-expiry lesson is clearly identified, not merely alluded to in passing.",
+    "notes": "3+ chunk synthesis across two postmortems. The connection is stated in the corpus (both 'Lessons' sections), so it is checkable ground truth, not opinion."
+  },
+  {
+    "id": "hard-third-psp",
+    "tier": "hard",
+    "query": "Should ArenaPlay add a third payment provider? Argue from our own architecture decisions.",
+    "expect": "answer",
+    "mustRetrieve": ["adr-018-dual-psp-payout-routing#alternatives-considered"],
+    "judge": "ADR-018 explicitly considered three-or-more PSPs and DEFERRED it: two proved sufficient for the observed failure independence, and each additional PSP adds reconciliation, compliance, and contract overhead. A complete answer must ground its argument in ADR-018's actual reasoning — the deferral and its cost rationale — rather than offering generic pros/cons of multi-provider setups. An answer that argues purely from general knowledge without citing the ADR's specific position fails.",
+    "notes": "Argued judgment anchored to a specific ADR's documented reasoning, not generic advice."
+  },
+  {
+    "id": "hard-growth-mechanic-festival",
+    "tier": "hard",
+    "query": "A new deposit-bonus mechanic is launching during the Diwali tournament. What does our process require before it ships?",
+    "expect": "answer",
+    "expectModel": "sonnet",
+    "judge": "A complete answer must weave requirements from at least three sources: (1) the festival capacity-planning process — demand forecast including marketing/referral inputs, pre-scaling, load-test evidence at the cross-functional checkpoint; (2) the mandatory risk review for any payout-adjacent growth mechanic, which came directly from the bonus-abuse postmortem; and (3) ideally the reason that risk-review gate exists (the coordinated bonus-abuse incident where a growth mechanic shipped without risk review). Missing the payout-adjacent risk-review requirement is a fail — that is the specific, non-obvious requirement this question tests.",
+    "notes": "Cross-cutting: capacity process + risk-review gate + the incident that created the gate."
+  },
+  {
+    "id": "hard-federation-override",
+    "tier": "hard",
+    "query": "An engineer wants to override the federation contract check to ship the wallet remote before the shell deploy lands. What should they know?",
+    "expect": "answer",
+    "mustRetrieve": ["postmortem-2025-wallet-mfe-version-skew#root-cause"],
+    "judge": "This exact scenario caused the wallet MFE version-skew outage: an override was approved assuming the shell would deploy first, the shell deploy was delayed, and the wallet remote shipped against a shared-dependency version the production shell didn't provide, breaking the wallet for ~35% of users. A complete answer must (a) warn that this specific situation caused a real SEV-2 outage, and (b) reference the fix that now governs it — overrides expire after 4 hours and re-verify the declared dependency at deploy time, blocking the deploy if unmet. An answer that treats this as a routine override without surfacing the incident history fails.",
+    "notes": "Tests whether the model connects a forward-looking question to the postmortem that answers it."
+  },
+  {
+    "id": "hard-idle-capacity-cost",
+    "tier": "hard",
+    "query": "Finance is questioning why we pay for idle standby servers during festivals. Justify the spend.",
+    "expect": "answer",
+    "mustRetrieve": [
+      "ops-festival-capacity-planning#pre-scaling-standby-capacity"
+    ],
+    "expectModel": "sonnet",
+    "judge": "A complete justification must connect the warm standby cost to the Diwali matchmaking incident it prevents: reactive autoscaling could not track the near-vertical lobby-open spike (a ~6-minute scale-out lag against a scheduled, predictable surge), which caused a SEV-1 with ~2.1M affected match attempts and a measurable retention dip. The standby pool trades a known, bounded infrastructure cost for elimination of an unbounded incident-and-trust cost. An answer that defends the spend only in generic capacity-planning terms, without grounding it in the specific incident and the trust-vs-cost tradeoff, is incomplete.",
+    "notes": "Cost justification requiring the incident as evidence and the trust-vs-cost framing."
+  },
+  {
+    "id": "hard-wallet-not-money",
+    "tier": "hard",
+    "query": "Users are reporting they can't see their wallet balance. Walk me through how to tell whether this is a payments problem or something else.",
+    "expect": "answer",
+    "judge": "The corpus contains the exact diagnostic lesson: in the wallet MFE skew incident, 'balance not visible' reports triaged wrongly toward the wallet/payments service  before error metadata revealed a client-side federation rendering failure — no money movement was affected. A complete answer must surface that 'can't see balance' is ambiguous between a genuine wallet/payments issue and a client-side rendering failure, and must point to the discriminator: error metadata (remote name, shell bundle version) distinguishes a client-side MFE failure from a real service problem, and alert routing now pages Web Platform first for client-side error signatures on wallet routes. An answer that assumes it is a payments problem fails the core lesson.",
+    "notes": "Directly tests the misrouting lesson; adjacent to the money-stuck conflation case but from the rendering-failure side."
   }
 ]

@@ -229,3 +229,51 @@ needs it.
 **Aside for the interview shelf:** the stdout/stderr split — machine channel
 vs. diagnostic channel — is 50-year-old Unix design suddenly load-bearing in
 a 2024 protocol.
+
+## 020 — Routing decided by experiment, not assumption; the eval is ground truth, the router approximates it
+ 
+**The experiment:** Made the answerer model configurable (`PLAYBOOK_MODEL`) and ran the full eval suite twice — Haiku arm and Sonnet arm — including six *hard* cases written specifically to strain a small model (multi-document synthesis, argued judgment anchored to specific ADRs). Result: across six hard cases, Sonnet won exactly one, on a fine synthesis-precision distinction (naming the "machine-enforced expiry" theme explicitly). Every operational query matched on Haiku. Cost delta: **~3.6×** (Haiku $1/$5 per MTok vs. Sonnet $3/$15), plus 2–4× latency.
+ 
+**Finding:** the premium model was a solution looking for a problem in this workload. Default to Haiku; escalate rarely. A near-null result is the strongest possible evidence *for* Haiku — and the self-preference bias in the judge (Sonnet grading a Sonnet-family answerer) tilts the deck slightly toward finding Sonnet better, which makes the null extra trustworthy.
+ 
+**Architecture chosen (option c):** Haiku-default with a documented, rarely-firing escalation. The router (`src/router.ts`) is a **pure function of retrieval signals** already computed for free — no classifier LLM call, no added latency: escalate to Sonnet when chunks span ≥3 distinct docs at a strong top score. `reason` is logged and shown on the dashboard — routing you can read.
+ 
+**The honest part — 12 points can't calibrate a threshold without overfitting.** So the eval suite *encodes* which queries need which model (`expectModel` on the two hard-synthesis cases), forcing that model at eval time — this is the routing GROUND TRUTH. The router is a cheap approximation of those labels. Where they disagree, a **soft `router-agreement` check** surfaces it (⚠, non-gating): the heuristic is allowed to be wrong, it is not allowed to be wrong *silently*. Current agreement: ~85% (2 of 13 cases disagree — both high-topScore 2-doc synthesis the doc-count heuristic misses).
+ 
+**Principle:** distinctDocs is a *proxy* for synthesis complexity, not a truth. The router catches the common signature; the eval suite is the backstop that catches its misses; the disagreement is a monitored metric, not a tuned-away embarrassment. Costs you pay; risks you architect away; heuristics you measure.
+ 
+---
+ 
+## 021 — Cost records: one instrumentation, runId-keyed, priced from a single table
+ 
+**Decision:** Every LLM call emits an `llm_call` event with `runId`, `model`, token counts (in/out/cache), `latency_ms`, and `cost_usd`. A `route` event per query carries the routing decision. One `runId` per `answer()` invocation threads every call — including the judge — so per-query cost aggregates correctly across a multi-turn agent loop.
+ 
+**Pricing is a single source of truth** (`src/pricing.ts`): `costOf(model, usage)` is the only place cost is computed; the answerer, judge, and dashboard all call it. Unknown model → throws (a silently uncosted call corrupts every aggregate — 007 applied to money). Same provenance discipline as 009: consumers never recompute what the source can state.
+ 
+**Field-name discipline learned the hard way:** an early `in: 0` bug (wrong field read, masked by `?? 0`) would have under-reported cost ~10× — input tokens dominate. `?? 0` belongs only on genuinely-nullable fields (cache tokens), never on fields that must exist. Fail-soft defaults hide real absences.
+ 
+---
+ 
+## 022 — Dashboard: pre-computed summary, client renders but never computes
+ 
+**Decision:** A build-time aggregator (`dashboard/aggregate.ts`) reads `logs/events.jsonl`, groups by `runId`, joins each query's `route` + `llm_call` events, and emits a small `summary.json`. The Next.js page imports that JSON and renders — no parsing, no aggregation, no log access in the browser.
+ 
+**Why not read the JSONL live from a route handler:** the client renders, it doesn't compute — same boundary discipline as the MCP server being a thin adapter (018) and the layered `search()` interface. Raw event processing is a server/build concern; shipping it to the browser couples presentation to storage format and re-does the work on every page load. For a static portfolio artifact the aggregator runs manually once; for a live system it's a cron every few hours. Either way the page is unchanged.
+ 
+**Latest-run scoping:** `events.jsonl` accumulates across many eval runs; headline numbers must describe *current* behavior, not a mix of experiments. The aggregator summarizes only the final contiguous run (gap-based boundary), so "total cost" and "model split" mean one representative run.
+
+---
+
+## 023 — N-run majority voting for judge cases, after observed CI variance
+
+**Observation:** A judge verdict flipped across identical CI runs — `hard-recurring-theme` went green → red → green with the same model (Sonnet, forced via `expectModel`), same answer shape, same criterion. The re-run that passed proved the failure was not the criterion being wrong and not the model being incapable: it was the judge itself being **non-deterministic**.
+
+**Where it happens:** the flakiness clusters on criteria that assess *prominence* rather than *presence* — "must be clearly identified, not merely alluded to in passing." Presence is a near-deterministic check ("does the answer contain X?"); prominence is a judgment call ("does the answer emphasize X *enough*?"), and the judge lands on different sides of that line run to run. Deterministic checks (mode, retrieval, citations, tool constraints) never flaked; only the judge did, only on emphasis criteria.
+
+**Decision:** Sample the judge `JUDGE_SAMPLES = 3` times per case and take the majority verdict. The returned `votes` field (e.g. "PASS 2/3") surfaces split decisions so a borderline case is visible rather than silently resolved. Calls are sequential to respect free-tier rate limits.
+
+**Cost tradeoff, decided deliberately:** 3× cost and latency, but *only on judge-bearing cases* — the low-volume path. This is decision 013's asymmetry applied to the harness itself: spend up on the low-volume, high-stakes verdict; a few extra cents per eval run buys a gate that doesn't randomly block good PRs. A flaky gate is worse than a slightly more expensive one — teams learn to ignore gates that cry wolf.
+
+**Alternatives considered:** (a) loosen the criterion to presence-only — rejected, because the criterion is corpus-accurate (both postmortems' Lessons sections state the machine-enforced-*expiry* theme explicitly) and weakening it to fix variance would trade a correct test for a flaky-but-lenient one; (b) temperature 0 on the judge — narrows variance but doesn't eliminate it (see the temperature discussion in the judge's history), and doesn't address the fundamental prominence-is-a-judgment-call issue. Majority voting addresses the variance directly.
+
+**Meta-lesson (the real one):** writing evals repeatedly surfaced where criteria disagreed with the corpus (12-vs-18 minutes, TTL-vs-general-machine-enforcement) — each time, the corpus won and the criterion was corrected. This case was the inverse: the criterion was right, the corpus backed it, and the *judge* was the unreliable component. Distinguishing "criterion wrong" from "judge flaky" required a re-run to produce evidence rather than a guess to produce a patch. The eval suite doing its job means catching all three failure modes — corpus drift, over-strict criteria, and judge non-determinism — and treating them differently.
