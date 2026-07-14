@@ -1,44 +1,44 @@
 {
-  "generatedAt": "2026-07-13T14:50:10.803Z",
-  "runStartedAt": "2026-07-13T14:47:41.763Z",
+  "generatedAt": "2026-07-14T07:23:09.962Z",
+  "runStartedAt": "2026-07-14T07:19:38.264Z",
   "queryCount": 12,
-  "totalCostUsd": 0.147975,
-  "avgCostPerQueryUsd": 0.012331,
+  "totalCostUsd": 0.219215,
+  "avgCostPerQueryUsd": 0.018268,
   "modelSplit": [
     {
       "model": "claude-haiku-4-5",
-      "queries": 8,
-      "pct": 66.7,
-      "costUsd": 0.056211
+      "queries": 7,
+      "pct": 58.3,
+      "costUsd": 0.063983
     },
     {
       "model": "claude-sonnet-4-6",
-      "queries": 4,
-      "pct": 33.3,
-      "costUsd": 0.091764
+      "queries": 5,
+      "pct": 41.7,
+      "costUsd": 0.155232
     }
   ],
   "routing": {
     "byReason": [
       {
         "reason": "default",
-        "queries": 8
+        "queries": 7
       },
       {
         "reason": "manual-override",
-        "queries": 2
+        "queries": 3
       },
       {
         "reason": "synthesis:3docs",
         "queries": 2
       }
     ],
-    "escalationRatePct": 33.3
+    "escalationRatePct": 41.7
   },
   "latency": {
-    "p50Ms": 10323,
-    "p90Ms": 19571,
-    "maxMs": 22544
+    "p50Ms": 20990,
+    "p90Ms": 26866,
+    "maxMs": 27514
   },
   "cache": {
     "anyCacheHits": false,
@@ -46,148 +46,148 @@
   },
   "queries": [
     {
-      "runId": "d81a1dde-c389-42ae-a495-bce437f0ab14",
+      "runId": "29440e76-2647-4dc6-81b2-ed44a27dd8c8",
       "model": "claude-sonnet-4-6",
       "reason": "synthesis:3docs",
       "distinctDocs": 3,
-      "topScore": 0.5653,
-      "turns": 2,
-      "costUsd": 0.025452,
-      "latencyMsTotal": 22544,
-      "tokensIn": 3824,
-      "tokensOut": 932
+      "topScore": 0.5652,
+      "turns": 4,
+      "costUsd": 0.032967,
+      "latencyMsTotal": 27514,
+      "tokensIn": 5939,
+      "tokensOut": 1010
     },
     {
-      "runId": "662b5663-4381-4ca1-ad5c-255005827c68",
+      "runId": "f0563625-90ee-4165-8612-8f3cfdb54bfe",
+      "model": "claude-sonnet-4-6",
+      "reason": "synthesis:3docs",
+      "distinctDocs": 3,
+      "topScore": 0.5173,
+      "turns": 3,
+      "costUsd": 0.032796,
+      "latencyMsTotal": 26325,
+      "tokensIn": 5267,
+      "tokensOut": 1133
+    },
+    {
+      "runId": "19c290ec-fb94-4edc-b212-592bb1d20ac7",
+      "model": "claude-sonnet-4-6",
+      "reason": "manual-override",
+      "distinctDocs": 2,
+      "topScore": 0.5115,
+      "turns": 4,
+      "costUsd": 0.030339,
+      "latencyMsTotal": 22660,
+      "tokensIn": 5243,
+      "tokensOut": 974
+    },
+    {
+      "runId": "da28a60c-1249-4b67-ad4a-d77dc0f052a5",
+      "model": "claude-sonnet-4-6",
+      "reason": "manual-override",
+      "distinctDocs": 3,
+      "topScore": 0.4213,
+      "turns": 4,
+      "costUsd": 0.030327,
+      "latencyMsTotal": 26088,
+      "tokensIn": 5189,
+      "tokensOut": 984
+    },
+    {
+      "runId": "0cda9f64-f3e1-4a2a-a717-a293463b2f70",
       "model": "claude-sonnet-4-6",
       "reason": "manual-override",
       "distinctDocs": 2,
       "topScore": 0.6536,
-      "turns": 2,
-      "costUsd": 0.023508,
-      "latencyMsTotal": 19357,
-      "tokensIn": 3711,
-      "tokensOut": 825
+      "turns": 4,
+      "costUsd": 0.028803,
+      "latencyMsTotal": 26866,
+      "tokensIn": 5436,
+      "tokensOut": 833
     },
     {
-      "runId": "0b0e23f9-221b-4f24-8283-369254bbc6f6",
-      "model": "claude-sonnet-4-6",
-      "reason": "synthesis:3docs",
-      "distinctDocs": 3,
-      "topScore": 0.5181,
-      "turns": 1,
-      "costUsd": 0.022014,
-      "latencyMsTotal": 18987,
-      "tokensIn": 2643,
-      "tokensOut": 939
-    },
-    {
-      "runId": "4d11c2a5-950e-4434-bf16-3d5dd179cb3c",
-      "model": "claude-sonnet-4-6",
-      "reason": "manual-override",
-      "distinctDocs": 2,
-      "topScore": 0.5105,
-      "turns": 2,
-      "costUsd": 0.02079,
-      "latencyMsTotal": 19571,
-      "tokensIn": 3155,
-      "tokensOut": 755
-    },
-    {
-      "runId": "59018bb3-2696-4f56-8dfd-a16f1c7737d7",
+      "runId": "26ce5e3f-dc9d-453f-a286-4ddd15f4823a",
       "model": "claude-haiku-4-5",
       "reason": "default",
       "distinctDocs": 2,
-      "topScore": 0.4269,
+      "topScore": 0.4267,
       "turns": 2,
-      "costUsd": 0.01155,
-      "latencyMsTotal": 10323,
-      "tokensIn": 5960,
-      "tokensOut": 658
+      "costUsd": 0.01874,
+      "latencyMsTotal": 20990,
+      "tokensIn": 7584,
+      "tokensOut": 820
     },
     {
-      "runId": "4a2d3b38-c00a-4005-8b78-162fc73d8c69",
-      "model": "claude-haiku-4-5",
-      "reason": "default",
-      "distinctDocs": 1,
-      "topScore": 0.5134,
-      "turns": 3,
-      "costUsd": 0.010371,
-      "latencyMsTotal": 15148,
-      "tokensIn": 7936,
-      "tokensOut": 487
-    },
-    {
-      "runId": "479ada4b-fe3d-4bf9-8ab2-84ed77597af5",
-      "model": "claude-haiku-4-5",
-      "reason": "default",
-      "distinctDocs": 2,
-      "topScore": 0.4281,
-      "turns": 1,
-      "costUsd": 0.008355,
-      "latencyMsTotal": 8823,
-      "tokensIn": 3192,
-      "tokensOut": 515
-    },
-    {
-      "runId": "88b65d05-1cc4-402c-aaeb-ec1f4e8b17ae",
+      "runId": "bc8dbb47-0666-4bf2-90a5-92d7523587ed",
       "model": "claude-haiku-4-5",
       "reason": "default",
       "distinctDocs": 3,
-      "topScore": 0.42,
+      "topScore": 0.4285,
       "turns": 1,
-      "costUsd": 0.007509,
-      "latencyMsTotal": 6614,
-      "tokensIn": 2887,
-      "tokensOut": 410
+      "costUsd": 0.016354,
+      "latencyMsTotal": 15992,
+      "tokensIn": 4899,
+      "tokensOut": 723
     },
     {
-      "runId": "90b6f657-c75a-4ec0-9611-37253a9d8759",
-      "model": "claude-haiku-4-5",
-      "reason": "default",
-      "distinctDocs": 4,
-      "topScore": 0.372,
-      "turns": 2,
-      "costUsd": 0.005194,
-      "latencyMsTotal": 4932,
-      "tokensIn": 4784,
-      "tokensOut": 82
-    },
-    {
-      "runId": "4a354087-6c33-4fa3-86e8-cdf2a6fd2ce3",
+      "runId": "f1299387-6cea-4aab-aeca-72ec8ec50999",
       "model": "claude-haiku-4-5",
       "reason": "default",
       "distinctDocs": 4,
       "topScore": 0.3654,
       "turns": 1,
-      "costUsd": 0.004705,
-      "latencyMsTotal": 4494,
-      "tokensIn": 2858,
-      "tokensOut": 131
+      "costUsd": 0.00856,
+      "latencyMsTotal": 9496,
+      "tokensIn": 3628,
+      "tokensOut": 238
     },
     {
-      "runId": "27327dbe-1865-4eee-b6d7-1dd6b48475c8",
+      "runId": "fc725e44-25fd-477d-8b3b-c5716ef93426",
+      "model": "claude-haiku-4-5",
+      "reason": "default",
+      "distinctDocs": 1,
+      "topScore": 0.5136,
+      "turns": 2,
+      "costUsd": 0.006568,
+      "latencyMsTotal": 5381,
+      "tokensIn": 5078,
+      "tokensOut": 298
+    },
+    {
+      "runId": "748047b1-96c5-40c2-ac3b-e0c407b3da8e",
+      "model": "claude-haiku-4-5",
+      "reason": "default",
+      "distinctDocs": 4,
+      "topScore": 0.3729,
+      "turns": 2,
+      "costUsd": 0.005204,
+      "latencyMsTotal": 11474,
+      "tokensIn": 4784,
+      "tokensOut": 84
+    },
+    {
+      "runId": "e6046246-22a1-4222-b840-9bdad8bee7fa",
       "model": "claude-haiku-4-5",
       "reason": "default",
       "distinctDocs": 3,
       "topScore": 0.4184,
       "turns": 1,
-      "costUsd": 0.004413,
-      "latencyMsTotal": 4000,
+      "costUsd": 0.004498,
+      "latencyMsTotal": 3785,
       "tokensIn": 2203,
-      "tokensOut": 442
+      "tokensOut": 459
     },
     {
-      "runId": "8bb91214-afab-4486-9170-fda7d6e355d8",
+      "runId": "9b076ac7-83f8-4e65-9d9c-4b110fdb9324",
       "model": "claude-haiku-4-5",
       "reason": "default",
       "distinctDocs": 2,
-      "topScore": 0.4697,
+      "topScore": 0.4698,
       "turns": 1,
-      "costUsd": 0.004114,
-      "latencyMsTotal": 5495,
+      "costUsd": 0.004059,
+      "latencyMsTotal": 3809,
       "tokensIn": 2284,
-      "tokensOut": 366
+      "tokensOut": 355
     }
   ]
 }

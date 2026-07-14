@@ -54,7 +54,7 @@
     "expect": "answer",
     "mustRetrieve": ["postmortem-2025-wallet-mfe-version-skew#lessons"],
     "expectModel": "sonnet",
-    "judge": "The corpus draws an explicit connection: both incidents were caused by a 'temporary' or override state that persisted because nothing expired it (a CI-check override in the skew incident, a temporary resolver timeout in the BFF cascade), and both were fixed by making the temporary state machine-enforced with expiry rather than relying on human discipline. A complete answer must identify THIS specific shared lesson — that conventions/temporary states decay and must be machine-enforced with automatic expiry — not merely observe that both are postmortems or both involve config. Partial credit is not a pass: the answer must name the machine-enforced-expiry theme.",
+    "judge": "Both incidents were caused by a temporary or override state that persisted because nothing automatically expired it (a CI-check override in the wallet-skew incident; a 'temporary' resolver timeout in the BFF cascade), and both were fixed by making that state machine-enforced with automatic expiry rather than relying on human discipline. A complete answer must identify machine-enforced expiry of temporary/override states as a shared lesson connecting the two incidents — naming that the fix is automatic, machine-checked expiry (e.g. overrides with TTLs, timeouts with automated reversion). The answer may also mention the broader principle that soft controls decay; that broader framing is acceptable and even desirable as long as the machine-enforced-expiry lesson is clearly identified, not merely alluded to in passing.",
     "notes": "3+ chunk synthesis across two postmortems. The connection is stated in the corpus (both 'Lessons' sections), so it is checkable ground truth, not opinion."
   },
   {
@@ -71,6 +71,7 @@
     "tier": "hard",
     "query": "A new deposit-bonus mechanic is launching during the Diwali tournament. What does our process require before it ships?",
     "expect": "answer",
+    "expectModel": "sonnet",
     "judge": "A complete answer must weave requirements from at least three sources: (1) the festival capacity-planning process — demand forecast including marketing/referral inputs, pre-scaling, load-test evidence at the cross-functional checkpoint; (2) the mandatory risk review for any payout-adjacent growth mechanic, which came directly from the bonus-abuse postmortem; and (3) ideally the reason that risk-review gate exists (the coordinated bonus-abuse incident where a growth mechanic shipped without risk review). Missing the payout-adjacent risk-review requirement is a fail — that is the specific, non-obvious requirement this question tests.",
     "notes": "Cross-cutting: capacity process + risk-review gate + the incident that created the gate."
   },

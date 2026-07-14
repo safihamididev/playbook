@@ -261,3 +261,19 @@ a 2024 protocol.
 **Why not read the JSONL live from a route handler:** the client renders, it doesn't compute — same boundary discipline as the MCP server being a thin adapter (018) and the layered `search()` interface. Raw event processing is a server/build concern; shipping it to the browser couples presentation to storage format and re-does the work on every page load. For a static portfolio artifact the aggregator runs manually once; for a live system it's a cron every few hours. Either way the page is unchanged.
  
 **Latest-run scoping:** `events.jsonl` accumulates across many eval runs; headline numbers must describe *current* behavior, not a mix of experiments. The aggregator summarizes only the final contiguous run (gap-based boundary), so "total cost" and "model split" mean one representative run.
+
+---
+
+## 023 — N-run majority voting for judge cases, after observed CI variance
+
+**Observation:** A judge verdict flipped across identical CI runs — `hard-recurring-theme` went green → red → green with the same model (Sonnet, forced via `expectModel`), same answer shape, same criterion. The re-run that passed proved the failure was not the criterion being wrong and not the model being incapable: it was the judge itself being **non-deterministic**.
+
+**Where it happens:** the flakiness clusters on criteria that assess *prominence* rather than *presence* — "must be clearly identified, not merely alluded to in passing." Presence is a near-deterministic check ("does the answer contain X?"); prominence is a judgment call ("does the answer emphasize X *enough*?"), and the judge lands on different sides of that line run to run. Deterministic checks (mode, retrieval, citations, tool constraints) never flaked; only the judge did, only on emphasis criteria.
+
+**Decision:** Sample the judge `JUDGE_SAMPLES = 3` times per case and take the majority verdict. The returned `votes` field (e.g. "PASS 2/3") surfaces split decisions so a borderline case is visible rather than silently resolved. Calls are sequential to respect free-tier rate limits.
+
+**Cost tradeoff, decided deliberately:** 3× cost and latency, but *only on judge-bearing cases* — the low-volume path. This is decision 013's asymmetry applied to the harness itself: spend up on the low-volume, high-stakes verdict; a few extra cents per eval run buys a gate that doesn't randomly block good PRs. A flaky gate is worse than a slightly more expensive one — teams learn to ignore gates that cry wolf.
+
+**Alternatives considered:** (a) loosen the criterion to presence-only — rejected, because the criterion is corpus-accurate (both postmortems' Lessons sections state the machine-enforced-*expiry* theme explicitly) and weakening it to fix variance would trade a correct test for a flaky-but-lenient one; (b) temperature 0 on the judge — narrows variance but doesn't eliminate it (see the temperature discussion in the judge's history), and doesn't address the fundamental prominence-is-a-judgment-call issue. Majority voting addresses the variance directly.
+
+**Meta-lesson (the real one):** writing evals repeatedly surfaced where criteria disagreed with the corpus (12-vs-18 minutes, TTL-vs-general-machine-enforcement) — each time, the corpus won and the criterion was corrected. This case was the inverse: the criterion was right, the corpus backed it, and the *judge* was the unreliable component. Distinguishing "criterion wrong" from "judge flaky" required a re-run to produce evidence rather than a guess to produce a patch. The eval suite doing its job means catching all three failure modes — corpus drift, over-strict criteria, and judge non-determinism — and treating them differently.
